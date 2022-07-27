@@ -19,6 +19,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"runtime"
 	"unsafe"
@@ -99,7 +100,7 @@ type PrivateKey interface {
 	MarshalPKCS1PrivateKeyPEM() (pem_block []byte, err error)
 
 	// MarshalPrivateKeyPEM converts the private key to PEM
-	MarshalPrivateKeyPEM()  (pem_block []byte, err error)
+	MarshalPrivateKeyPEM() (pem_block []byte, err error)
 
 	// MarshalPKCS1PrivateKeyDER converts the private key to DER-encoded PKCS1
 	// format
@@ -294,9 +295,9 @@ func (key *pKey) MarshalPKIXPublicKeyDER() (der_block []byte,
 	return ioutil.ReadAll(asAnyBio(bio))
 }
 
-func (key *pKey) ExtractPublicKey() (PublicKey, error)  {
+func (key *pKey) ExtractPublicKey() (PublicKey, error) {
 	pub_der, err := key.MarshalPKIXPublicKeyDER()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	return LoadPublicKeyFromDER(pub_der)
@@ -474,8 +475,9 @@ func GenerateECKey(curve EllipticCurve) (PrivateKey, error) {
 	}
 
 	// Set curve in EC parameter generation context
-	if int(C.X_EVP_PKEY_CTX_set_ec_paramgen_curve_nid(paramCtx, C.int(curve))) != 1 {
-		return nil, errors.New("failed setting curve in EC parameter generation context")
+	errCode := int(C.X_EVP_PKEY_CTX_set_ec_paramgen_curve_nid(paramCtx, C.int(curve)))
+	if errCode != 1 {
+		return nil, errors.New(fmt.Sprintf("failed setting curve in EC parameter generation context. Error code: %v"), errCode)
 	}
 
 	// Create parameter object
@@ -515,9 +517,9 @@ func GeneratePrime256v1ECKey() (PrivateKey, error) {
 	eccgrp := C.OBJ_txt2nid(ecctype)
 	myecc := C.EC_KEY_new_by_curve_name(eccgrp)
 
-	C.EC_KEY_set_asn1_flag(myecc, 1);
+	C.EC_KEY_set_asn1_flag(myecc, 1)
 
-	//Create the public/private EC key pair	  
+	//Create the public/private EC key pair
 	if C.EC_KEY_generate_key(myecc) != 1 {
 		return nil, errors.New("failed generating public/private EC key pair")
 	}
@@ -527,7 +529,7 @@ func GeneratePrime256v1ECKey() (PrivateKey, error) {
 	if key == nil {
 		return nil, errors.New("failed to allocate EVP_PKEY")
 	}
-	
+
 	if C.X_EVP_PKEY_assign_charp(key, C.EVP_PKEY_EC, (*C.char)(unsafe.Pointer(myecc))) != 1 {
 		C.EVP_PKEY_free(key)
 		return nil, errors.New("fError assigning ECC key to EVP_PKEY structure")
@@ -536,7 +538,7 @@ func GeneratePrime256v1ECKey() (PrivateKey, error) {
 	p := &pKey{key: key}
 	runtime.SetFinalizer(p, func(p *pKey) {
 		C.EVP_PKEY_free(p.key)
-	})	
+	})
 	return p, nil
 }
 
