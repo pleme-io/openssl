@@ -475,9 +475,9 @@ func GenerateECKey(curve EllipticCurve) (PrivateKey, error) {
 	}
 
 	//Set curve in EC parameter generation context
-	errCode := int(C.X_EVP_PKEY_CTX_set_ec_paramgen_curve_nid(paramCtx, C.int(209)))
+	errCode := int(C.X_EVP_PKEY_CTX_set_ec_paramgen_curve_nid(paramCtx, C.int(410)))
 	if errCode != 1 {
-		return nil, errors.New(fmt.Sprintf("failed setting curve in EC parameter generation context. Error code: %v, curve: %v", errCode, 209))
+		return nil, errors.New(fmt.Sprintf("failed setting curve in EC parameter generation context. Error code: %v, curve: %v", errCode, 410))
 	}
 
 	// var iCurve = 480
