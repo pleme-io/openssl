@@ -474,27 +474,24 @@ func GenerateECKey(curve EllipticCurve) (PrivateKey, error) {
 		return nil, errors.New("failed initializing EC parameter generation context")
 	}
 
-	//409, 410
-	//Set curve in EC parameter generation context
-	errCode := int(C.X_EVP_PKEY_CTX_set_ec_paramgen_curve_nid(paramCtx, C.int(curve)))
-	if errCode != 1 {
-		return nil, errors.New(fmt.Sprintf("failed setting curve in EC parameter generation context. Error code: %v, curve: %v", errCode, curve))
+	var curveId int
+	switch curve {
+	case 256:
+		curveId = 714
+	case 384:
+		curveId = 715
+	case 521:
+		curveId = 716
+	}
+	if curveId == 0 {
+		return nil, errors.New(fmt.Sprintf("Not supported elliptic curve. Curve: %v", curve))
 	}
 
-	// var iCurve = 480
-	// var errCode int
-	// for ; iCurve <= 510; iCurve++ {
-	// 	errCode = int(C.X_EVP_PKEY_CTX_set_ec_paramgen_curve_nid(paramCtx, C.int(iCurve)))
-	// 	if errCode == 1 {
-	// 		return nil, errors.New(fmt.Sprintf("URA setting curve in EC parameter generation context. curve: %v", iCurve))
-
-	// 	}
-
-	// }
-
-	// if errCode != 1 {
-	// 	return nil, errors.New(fmt.Sprintf("Failed setting curve in EC parameter generation context. Error code: %v, curve: %v", errCode, iCurve))
-	// }
+	//Set curve in EC parameter generation context
+	errCode := int(C.X_EVP_PKEY_CTX_set_ec_paramgen_curve_nid(paramCtx, C.int(curveId)))
+	if errCode != 1 {
+		return nil, errors.New(fmt.Sprintf("failed setting curve in EC parameter generation context. Error code: %v, curve: %v, curveId: %v", errCode, curve, curveId))
+	}
 
 	// Create parameter object
 	var params *C.EVP_PKEY
