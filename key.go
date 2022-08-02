@@ -477,11 +477,11 @@ func GenerateECKey(curve EllipticCurve) (PrivateKey, error) {
 	var curveId int
 	switch curve {
 	case 256:
-		curveId = 714
+		curveId = 415 //id of NID_X9_62_prime256v1
 	case 384:
-		curveId = 715
+		curveId = 715 // NID_secp384r1
 	case 521:
-		curveId = 716
+		curveId = 716 //NID_secp521r1
 	}
 	if curveId == 0 {
 		return nil, errors.New(fmt.Sprintf("Not supported elliptic curve. Curve: %v", curve))
