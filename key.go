@@ -523,7 +523,10 @@ func GenerateECKey(curve EllipticCurve) (PrivateKey, error) {
 	return p, nil
 }
 
-func generateECKeyByName(name C.CString) (PrivateKey, error) {
+func generateECKeyByName(name string) (PrivateKey, error) {
+	ecctype := C.CString(name)
+	defer C.free(unsafe.Pointer(ecctype))
+
 	eccgrp := C.OBJ_txt2nid(ecctype)
 	myecc := C.EC_KEY_new_by_curve_name(eccgrp)
 
@@ -554,24 +557,15 @@ func generateECKeyByName(name C.CString) (PrivateKey, error) {
 
 //Use this function for generating P-256 curve in FIPS mode (instead of GenerateECKey)
 func GeneratePrime256v1ECKey() (PrivateKey, error) {
-	ecctype := C.CString("prime256v1")
-	defer C.free(unsafe.Pointer(ecctype))
-
-	return generateECKeyByName(ecctype)
+	return generateECKeyByName("prime256v1")
 }
 
 func GeneratePrime384r1ECKey() (PrivateKey, error) {
-	ecctype := C.CString("secp384r1")
-	defer C.free(unsafe.Pointer(ecctype))
-
-	return generateECKeyByName(ecctype)
+	return generateECKeyByName("secp384r1")
 }
 
 func GeneratePrime521r1ECKey() (PrivateKey, error) {
-	ecctype := C.CString("secp521r1")
-	defer C.free(unsafe.Pointer(ecctype))
-
-	return generateECKeyByName(ecctype)
+	return generateECKeyByName("secp521r1")
 }
 
 // GenerateED25519Key generates a Ed25519 key
