@@ -523,8 +523,73 @@ func GenerateECKey(curve EllipticCurve) (PrivateKey, error) {
 	return p, nil
 }
 
+//Use this function for generating P-256 curve in FIPS mode (instead of GenerateECKey)
 func GeneratePrime256v1ECKey() (PrivateKey, error) {
 	ecctype := C.CString("prime256v1")
+	defer C.free(unsafe.Pointer(ecctype))
+
+	eccgrp := C.OBJ_txt2nid(ecctype)
+	myecc := C.EC_KEY_new_by_curve_name(eccgrp)
+
+	C.EC_KEY_set_asn1_flag(myecc, 1)
+
+	//Create the public/private EC key pair
+	if C.EC_KEY_generate_key(myecc) != 1 {
+		return nil, errors.New("failed generating public/private EC key pair")
+	}
+
+	//Converting the EC key into a PKEY structure
+	key := C.EVP_PKEY_new()
+	if key == nil {
+		return nil, errors.New("failed to allocate EVP_PKEY")
+	}
+
+	if C.X_EVP_PKEY_assign_charp(key, C.EVP_PKEY_EC, (*C.char)(unsafe.Pointer(myecc))) != 1 {
+		C.EVP_PKEY_free(key)
+		return nil, errors.New("fError assigning ECC key to EVP_PKEY structure")
+	}
+
+	p := &pKey{key: key}
+	runtime.SetFinalizer(p, func(p *pKey) {
+		C.EVP_PKEY_free(p.key)
+	})
+	return p, nil
+}
+
+func GeneratePrime384v1ECKey() (PrivateKey, error) {
+	ecctype := C.CString("secp384r1")
+	defer C.free(unsafe.Pointer(ecctype))
+
+	eccgrp := C.OBJ_txt2nid(ecctype)
+	myecc := C.EC_KEY_new_by_curve_name(eccgrp)
+
+	C.EC_KEY_set_asn1_flag(myecc, 1)
+
+	//Create the public/private EC key pair
+	if C.EC_KEY_generate_key(myecc) != 1 {
+		return nil, errors.New("failed generating public/private EC key pair")
+	}
+
+	//Converting the EC key into a PKEY structure
+	key := C.EVP_PKEY_new()
+	if key == nil {
+		return nil, errors.New("failed to allocate EVP_PKEY")
+	}
+
+	if C.X_EVP_PKEY_assign_charp(key, C.EVP_PKEY_EC, (*C.char)(unsafe.Pointer(myecc))) != 1 {
+		C.EVP_PKEY_free(key)
+		return nil, errors.New("fError assigning ECC key to EVP_PKEY structure")
+	}
+
+	p := &pKey{key: key}
+	runtime.SetFinalizer(p, func(p *pKey) {
+		C.EVP_PKEY_free(p.key)
+	})
+	return p, nil
+}
+
+func GeneratePrime521v1ECKey() (PrivateKey, error) {
+	ecctype := C.CString("secp521r1")
 	defer C.free(unsafe.Pointer(ecctype))
 
 	eccgrp := C.OBJ_txt2nid(ecctype)
